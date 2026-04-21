@@ -32,9 +32,9 @@ from config import (
     INPUT_FILE, OUTPUT_FILE,
     INSTAGRAM_COOKIES, LINKEDIN_COOKIES,
     YOUTUBE_URL_COL,   INSTAGRAM_URL_COL, FACEBOOK_URL_COL,
-    X_URL_COL,         LINKEDIN_URL_COL,
+    X_URL_COL,         LINKEDIN_URL_COL,  TIKTOK_URL_COL,
     YOUTUBE_COUNT_COL, INSTAGRAM_COUNT_COL, FACEBOOK_COUNT_COL,
-    X_COUNT_COL,       LINKEDIN_COUNT_COL,
+    X_COUNT_COL,       LINKEDIN_COUNT_COL,  TIKTOK_COUNT_COL,
 )
 
 # --- Import scraper functions from each platform file ---
@@ -43,6 +43,7 @@ from instagram import get_instagram_followers   # uses Playwright + cookies
 from facebook  import get_facebook_followers    # uses Playwright
 from x_twitter import get_x_followers          # uses Playwright
 from linkedin  import get_linkedin_followers    # uses Playwright + cookies
+from tiktok    import get_tiktok_followers      # uses Playwright
 
 
 # ------------------------------------------------------------
@@ -110,7 +111,7 @@ def main():
     # Add output columns to fieldnames if they don't exist yet in the CSV
     for col in [
         YOUTUBE_COUNT_COL, INSTAGRAM_COUNT_COL, FACEBOOK_COUNT_COL,
-        X_COUNT_COL, LINKEDIN_COUNT_COL,
+        X_COUNT_COL, LINKEDIN_COUNT_COL, TIKTOK_COUNT_COL,
     ]:
         if col not in fieldnames:
             fieldnames.append(col)
@@ -134,11 +135,15 @@ def main():
         # X works without cookies for most public profiles
         x_context         = make_context(browser)
 
+        # TikTok works without cookies for public profiles
+        tiktok_context    = make_context(browser)
+
         # Create one page per context
         facebook_page  = facebook_context.new_page()
         instagram_page = instagram_context.new_page()
         x_page         = x_context.new_page()
         linkedin_page  = linkedin_context.new_page()
+        tiktok_page    = tiktok_context.new_page()
 
         # --- Process each row in the CSV ---
         for i, row in enumerate(rows):
@@ -177,6 +182,13 @@ def main():
             if li_url and not row.get(LINKEDIN_COUNT_COL):
                 print("  Fetching LinkedIn...")
                 row[LINKEDIN_COUNT_COL] = get_linkedin_followers(li_url, linkedin_page)
+                time.sleep(random.uniform(2, 3))
+
+            # TIKTOK — public profiles, no login needed
+            tt_url = row.get(TIKTOK_URL_COL, "").strip()
+            if tt_url and not row.get(TIKTOK_COUNT_COL):
+                print("  Fetching TikTok...")
+                row[TIKTOK_COUNT_COL] = get_tiktok_followers(tt_url, tiktok_page)
                 time.sleep(random.uniform(2, 3))
 
         browser.close()
