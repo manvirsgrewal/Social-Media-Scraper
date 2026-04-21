@@ -1,6 +1,6 @@
 # Social-Media-Scraper
 
-A Python tool that reads social media URLs from a CSV file and automatically extracts follower and subscriber counts for YouTube, Instagram, Facebook, X, and LinkedIn. Results are written back to a new CSV file.
+A Python tool that reads social media URLs from a CSV file and automatically extracts follower and subscriber counts for YouTube, Instagram, Facebook, X, LinkedIn, and TikTok. Results are written back to a new CSV file.
 
 
 
@@ -15,6 +15,7 @@ The script reads each row of your CSV, visits each social media page, extracts t
 | Facebook | Playwright headless browser | No |
 | X  | Playwright headless browser | No |
 | LinkedIn | Playwright headless browser | Yes (cookies) |
+| TikTok | Playwright headless browser | No |
 
 
 
@@ -30,6 +31,7 @@ social-media-scraper/
     facebook.py               ← Facebook scraper (Playwright)
     x_twitter.py              ← X/Twitter scraper (Playwright)
     linkedin.py               ← LinkedIn scraper (Playwright + cookies)
+    tiktok.py                 ← TikTok scraper (Playwright)
     instagram_login_save.py   ← one-time setup: saves Instagram login session
     linkedin_login_save.py    ← one-time setup: saves LinkedIn login session
 ```
@@ -79,6 +81,7 @@ INSTAGRAM_URL_COL = "instagram"
 FACEBOOK_URL_COL  = "facebook"
 X_URL_COL         = "x__twitter"
 LINKEDIN_URL_COL  = "linkedin_profile"
+TIKTOK_URL_COL    = "tiktok"
 
 # Output columns — where follower counts get written
 YOUTUBE_COUNT_COL   = "youtube_subscribers"
@@ -86,6 +89,7 @@ INSTAGRAM_COUNT_COL = "instagram_followers"
 FACEBOOK_COUNT_COL  = "facebook_followers"
 X_COUNT_COL         = "twitter_followers"
 LINKEDIN_COUNT_COL  = "linkedin_followers"
+TIKTOK_COUNT_COL    = "tiktok_followers"
 ```
 
 
@@ -176,6 +180,7 @@ Row 1/95
   Fetching Facebook...
   Fetching X...
   Fetching LinkedIn...
+  Fetching TikTok...
 
 Done! Output saved to: output.csv
 ```
@@ -186,9 +191,9 @@ Done! Output saved to: output.csv
 
 Your input CSV should have URL columns and empty count columns that the scraper will fill in:
 
-| listing_title | youtube | youtube_subscribers | instagram | instagram_followers |
+| listing_title | youtube | youtube_subscribers | tiktok | tiktok_followers |
 |---|---|---|---|---|
-| NASA | https://www.youtube.com/nasa | | https://www.instagram.com/nasa | |
+| NASA | https://www.youtube.com/nasa | | https://www.tiktok.com/@nasa | |
 
 The column names must match what is set in `config.py`.
 
@@ -207,6 +212,13 @@ https://www.youtube.com/channelname         short custom URL
 /in/personalprofile                →  skipped (no follower count on personal profiles)
 ```
 
+**Supported TikTok URL formats** — all handled automatically:
+```
+https://www.tiktok.com/@username    standard profile URL
+https://tiktok.com/@username        without www
+@username                           handle only (scheme added automatically)
+```
+
 
 
 ## Individual Platform Testing
@@ -219,6 +231,7 @@ python instagram.py    # test Instagram follower fetching
 python facebook.py     # test Facebook follower fetching
 python x_twitter.py    # test X/Twitter follower fetching
 python linkedin.py     # test LinkedIn follower fetching
+python tiktok.py       # test TikTok follower fetching
 ```
 
 **What each standalone test shows:**
@@ -228,8 +241,9 @@ python linkedin.py     # test LinkedIn follower fetching
 - `facebook.py` — prints raw HTML snippets containing "followers" to show what patterns are on the page
 - `x_twitter.py` — opens a **visible browser window** so you can confirm the page loaded correctly
 - `linkedin.py` — opens a **visible browser window**, prints meta tag content, and shows the follower count
+- `tiktok.py` — opens a **visible browser window** so you can confirm the page loaded and was not blocked
 
-> `x_twitter.py` and `linkedin.py` open a visible Chrome window during standalone testing. This is intentional — it lets you visually confirm the page is not showing a login wall. The window stays open until you press Enter. When `main.py` runs the full pipeline it uses a hidden browser for speed.
+> `x_twitter.py`, `linkedin.py`, and `tiktok.py` open a visible Chrome window during standalone testing. This is intentional — it lets you visually confirm the page is not showing a login wall or bot-detection screen. The window stays open until you press Enter. When `main.py` runs the full pipeline it uses a hidden browser for speed.
 
 
 
@@ -249,6 +263,9 @@ Your cookies have expired. Re-run `python linkedin_login_save.py`. Make sure to 
 **Facebook returns None:**
 Some pages do not publicly display follower counts, or the page may be a personal profile rather than a business page. This is a platform limitation.
 
+**TikTok returns None:**
+TikTok aggressively blocks headless browsers. Run `python tiktok.py` first with the visible browser to confirm what is actually being served — it may be showing a CAPTCHA or bot-detection page. If every URL returns None, try running from a personal WiFi network. Private TikTok accounts will always return None.
+
 **Network / DNS errors:**
 ```
 Failed to resolve 'www.instagram.com'
@@ -266,3 +283,4 @@ The script skips any cell that already contains a value. You can safely re-run `
 - Each platform uses its own isolated browser session so cookies never interfere between platforms
 - The scraper works on public pages only — private accounts return None
 - Instagram and LinkedIn cookie sessions expire after approximately 2–4 weeks and need to be refreshed by re-running the login save scripts
+- TikTok extracts follower counts from the `__UNIVERSAL_DATA__` JSON blob embedded in every public profile page, with a meta description tag as fallback
