@@ -60,6 +60,7 @@ INSTAGRAM_URL_COL = "instagram"
 FACEBOOK_URL_COL  = "facebook"
 X_URL_COL         = "x__twitter"
 LINKEDIN_URL_COL  = "linkedin_profile"
+TIKTOK_URL_COL    = "tiktok"
 
 # Output columns — where follower counts get written
 YOUTUBE_COUNT_COL   = "youtube_subscribers"
@@ -67,3 +68,4 @@ INSTAGRAM_COUNT_COL = "instagram_followers"
 FACEBOOK_COUNT_COL  = "facebook_followers"
 X_COUNT_COL         = "twitter_followers"
 LINKEDIN_COUNT_COL  = "linkedin_followers"
+TIKTOK_COUNT_COL    = "tiktok_followers"
